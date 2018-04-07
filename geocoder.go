@@ -53,9 +53,26 @@ type Geocoder struct {
 	sleep time.Time
 }
 
+type GeocodeBounds struct {
+	North				float64
+	South				float64
+	East				float64
+	West				float64
+}
+
 type GeocodeParams struct {
 	// Country hint
-	CountryCode string
+	CountryCode 		string
+	Limit				int
+	MinConfidence		int
+	NoAnnotations		bool
+	NoDedupe			bool
+	NoRecord			bool
+	Language			string
+	Bounds				*GeocodeBounds
+	AddRequest			bool
+	Abbreviate			bool
+	Pretty				bool
 }
 
 type GeocodeResult struct {
@@ -154,8 +171,43 @@ func (g *Geocoder) geocodeUrl(query string, params *GeocodeParams) string {
 		if params.CountryCode != "" {
 			q.Set("countrycode", strings.ToLower(params.CountryCode))
 		}
+		if params.Limit != 0 {
+			q.Set("limit", fmt.Sprintf("%v", params.Limit))
+		}
+		if params.MinConfidence != 0 {
+			if params.MinConfidence > 10 || params.MinConfidence < 0 {
+				// if too high or too low, set to the center
+				params.MinConfidence = 5
+			}
+			q.Set("min_confidence", fmt.Sprintf("%v", params.MinConfidence))
+		}
+		if params.NoAnnotations == true {
+			q.Set("no_annotations", "1")
+		}
+		if params.NoDedupe == true {
+			q.Set("no_dedupe", "1")
+		}
+		if params.NoRecord == true {
+			q.Set("no_record", "1")
+		}
+		if params.AddRequest == true {
+			q.Set("add_request", "1")
+		}
+		if params.Abbreviate == true {
+			q.Set("abbrv", "1")
+		}
+		if params.Pretty == true {
+			q.Set("pretty", "1")
+		}
+		if params.Language != "" {
+			q.Set("language", params.Language)
+		}
+		if params.Bounds != nil {
+			q.Set("bounds", fmt.Sprintf("%v,%v,%v,%v", params.Bounds.West, params.Bounds.South, params.Bounds.East, params.Bounds.North))
+		}
 	}
 
 	u.RawQuery = q.Encode()
 	return u.String()
 }
+
